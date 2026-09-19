@@ -1,0 +1,23 @@
+services:
+  api:
+    build: .
+    image: sheetcut-planner
+    container_name: sheetcut-api
+    ports:
+      # 宿主机端口可用环境变量 PORT 覆盖，默认 8000
+      - "${PORT:-8000}:8000"
+    environment:
+      # 工作进程数（单进程即可满足小店日常排版；多核可适当调大）
+      UVICORN_WORKERS: ${UVICORN_WORKERS:-1}
+    command: >
+      uvicorn app.main:app
+      --host 0.0.0.0
+      --port 8000
+      --workers $${UVICORN_WORKERS:-1}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys;sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health',timeout=3).status==200 else 1)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
